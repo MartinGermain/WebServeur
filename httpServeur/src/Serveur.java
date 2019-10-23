@@ -87,7 +87,7 @@ public class Serveur
                         if (requestType.equals("GET")){
                             getHttp(requestedElement);
                         }else if(requestType.equals("POST")) {
-
+                            postHttp(requestedElement);
                         }else if(requestType.equals("HEAD")) {
 
                         }else if(requestType.equals("PUT")) {
@@ -236,6 +236,46 @@ public class Serveur
                 out.flush();
             } catch (Exception e2) {};
         }
+    }
+
+    protected void postHttp( String filename) throws IOException {
+        System.out.println("Call to POST " + filename);
+         try {
+             File file = new File(filename);
+             boolean existed = file.exists();
+
+             // Ouverture du fichier en mode écriture a la fin.
+             BufferedOutputStream fileOut = new BufferedOutputStream(new FileOutputStream(file,existed));
+
+             byte[] buffer = new byte[256];
+
+             //Ecrire le body dans le fichier.
+             while(in.available() > 0) {
+                 int nbRead = in.read(buffer);
+                 fileOut.write(buffer, 0, nbRead);
+             }
+             fileOut.flush();
+             // Fermetude du fichier
+             fileOut.close();
+
+             // Envoyer le header en fonction de ce qui c'est passé
+             if(existed) {
+                 // Réusite
+                 out.write(createHeader("200 OK").getBytes());
+             } else {
+                 // Création de la resource
+                 out.write(createHeader("201 Created").getBytes());
+             }
+
+             //Envoyer le header
+             out.flush();
+
+         } catch (FileNotFoundException e) {
+             e.printStackTrace();
+            // Si il yb a une erreur on envoie au client l'erreur.
+             out.write(createHeader("500 Internal Server Error").getBytes());
+             out.flush();
+         } catch (IOException e) {}
     }
 
 
