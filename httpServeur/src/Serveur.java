@@ -89,11 +89,11 @@ public class Serveur
                         }else if(requestType.equals("POST")) {
                             postHttp(requestedElement);
                         }else if(requestType.equals("HEAD")) {
-
+                            headHttp(requestedElement);
                         }else if(requestType.equals("PUT")) {
 
                         }else if(requestType.equals("DELETE")) {
-
+                            deleteHttp(requestedElement);
                         }else {
                             // Si la requète ne possède pas un type connu on renvoie une erreur.
                             // getBytes transforme la string du header en bytes.
@@ -316,7 +316,7 @@ public class Serveur
             // Envoi du Header
             if(deleted) {
                 // Le ficher a été suprrimé corectement mais on a rien a renvoyer
-                out.write(createHeader("204 No Content").getBytes());
+                out.write(createHeader("204 File Deleted").getBytes());
             } else if (!existed) {
                 // Le fichier n'a pas été trouvé sur le seveur
                 out.write(createHeader("404 Not Found").getBytes());
@@ -335,9 +335,6 @@ public class Serveur
             } catch (Exception e2) {};
         }
     }
-
-
-
 
 
 
