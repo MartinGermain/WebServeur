@@ -91,7 +91,7 @@ public class Serveur
                         }else if(requestType.equals("HEAD")) {
                             headHttp(requestedElement);
                         }else if(requestType.equals("PUT")) {
-
+                            putHttp(requestedElement);
                         }else if(requestType.equals("DELETE")) {
                             deleteHttp(requestedElement);
                         }else {
@@ -296,6 +296,51 @@ public class Serveur
             e.printStackTrace();
             try {
                 // En cas d'erreur on essaie d'avertir le client
+                out.write(createHeader("500 Internal Server Error").getBytes());
+                out.flush();
+            } catch (Exception e2) {};
+        }
+    }
+
+    protected void putHttp(String filename) {
+        System.out.println("PUT " + filename);
+        try {
+            File resource = new File(filename);
+            boolean existed = resource.exists();
+
+            // Efface le contenu fichier
+            PrintWriter pw = new PrintWriter(resource);
+            pw.close();
+
+            // Flux d'criture sur le fichier
+            BufferedOutputStream fileOut = new BufferedOutputStream(new FileOutputStream(resource));
+
+            // Ecrire dans le fichier
+            byte[] buffer = new byte[256];
+            while(in.available() > 0) {
+                int nbRead = in.read(buffer);
+                fileOut.write(buffer, 0, nbRead);
+            }
+            // Envoyer sur le fichier
+            fileOut.flush();
+
+            //Fermeture du flux d'ecriture
+            fileOut.close();
+
+            // Envoi du Header (pas besoin de corps)
+            if(existed) {
+                // Si il existe on a bien réecrit dessus donc modifier le contenu
+                out.write(createHeader("204 Modified").getBytes());
+            } else {
+                // On indique que l'on a créer le fichier
+                out.write(createHeader("201 Created").getBytes());
+            }
+            // Envoi au client
+            out.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+            // En cas d'erreur on essaie d'avertir le client
+            try {
                 out.write(createHeader("500 Internal Server Error").getBytes());
                 out.flush();
             } catch (Exception e2) {};
