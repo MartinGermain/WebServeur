@@ -278,6 +278,66 @@ public class Serveur
          } catch (IOException e) {}
     }
 
+    protected void headHttp(String filename) {
+        System.out.println("HEAD " + filename);
+        try {
+            // On regarde si le fichier existe
+            File resource = new File(filename);
+            if(resource.exists() && resource.isFile()) {
+                // Si il existe on envoie le header correspondant. sans le corps car c'est un head
+                out.write(createHeader("200 OK", filename, resource.length()).getBytes());
+            } else {
+                // Envoi du Header signalant une erreur sans le corps car c'est un head
+                out.write(createHeader("404 Not Found").getBytes());
+            }
+            // envoie des données
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+            try {
+                // En cas d'erreur on essaie d'avertir le client
+                out.write(createHeader("500 Internal Server Error").getBytes());
+                out.flush();
+            } catch (Exception e2) {};
+        }
+    }
+
+    protected void deleteHttp(String filename) {
+        System.out.println("DELETE " + filename);
+        try {
+            File resource = new File(filename);
+            // Suppression du fichier
+            boolean deleted = false;
+            boolean existed = false;
+            if((existed = resource.exists()) && resource.isFile()) {
+                deleted = resource.delete();
+            }
+
+            // Envoi du Header
+            if(deleted) {
+                // Le ficher a été suprrimé corectement mais on a rien a renvoyer
+                out.write(createHeader("204 No Content").getBytes());
+            } else if (!existed) {
+                // Le fichier n'a pas été trouvé sur le seveur
+                out.write(createHeader("404 Not Found").getBytes());
+            } else {
+                // Erreur dans la suppression ou dans l'acces dde la resource
+                out.write(createHeader("403 Forbidden").getBytes());
+            }
+            // on envoie tout
+            out.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+            // En cas d'erreur on essaie d'avertir le client
+            try {
+                out.write(createHeader("500 Internal Server Error").getBytes());
+                out.flush();
+            } catch (Exception e2) {};
+        }
+    }
+
+
+
 
 
 
