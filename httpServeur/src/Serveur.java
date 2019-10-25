@@ -199,6 +199,12 @@ public class Serveur
         return header;
     }
 
+    /**Cette Méthode permet de traiter une requete GET envoyé par un client.
+     * Si le fichier n'existe pas on envoie a l'utiliasteur une erreur 404 Not Found et affiche la page html page not found.
+     * Si le fichier existe on le lit et on ecrit dans le body de la reponse le fichier. ET on envoie dans le header 200 OK
+     * Si il y a une erreur de lecture du fichier ou autre on renvera une erreur 500 qui indique une erreur interne au serveur.
+     * @param filename
+     */
     protected void getHttp(String filename)
     {
         System.out.println("Call to GET " + filename);
@@ -238,6 +244,15 @@ public class Serveur
         }
     }
 
+    /** La méthode Post permet de mettre a jour une resource.
+     *
+     * Si le fichier exisiste on se place a la fin de ce dernier et on ajoute le reste. On renvoie au client 200 OK
+     * Si le ficher existe pas on le crée et on y ajoute ce qu'il faut y ajouter. On renvoie ensuite 201 Created.
+     * En cas d'erreur interne au serveur. On essaye d'envoyer au clienr qu'une erreur interne au projet c'est produite et on envoie 500 Internal serveur error
+     *
+     * @param filename
+     * @throws IOException
+     */
     protected void postHttp( String filename) throws IOException {
         System.out.println("Call to POST " + filename);
          try {
@@ -278,6 +293,14 @@ public class Serveur
          } catch (IOException e) {}
     }
 
+    /** La méthode Head permet de récupérer seulement le header d'une requete. Elle est utilise pour avoir les informations importantes du fichier mais sans le contenu du body.
+     * Par exemple pour recevoir la taille du fichier ou type de fichier.
+     * Si tout ce passe bien on rénvoie un header avec les infos et un code 200 OK.
+     * Si le fichier n'existe pas on renvoie 404 page not found.
+     * Si une erreur interne au seveur se produit on tente d'envoyer au client le code 500 Internal serveur error.
+     *
+     * @param filename
+     */
     protected void headHttp(String filename) {
         System.out.println("HEAD " + filename);
         try {
