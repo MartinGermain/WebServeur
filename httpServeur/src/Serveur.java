@@ -325,6 +325,12 @@ public class Serveur
         }
     }
 
+    /**  La méthode put permet de mettre en ligne une nouvelle resource.
+     * Si le fichier exisiste on supprime son contenu et on y ajoute le nouveau contenu. On renvoie au client 204 Modifed
+     * Si le ficher existe pas on le crée et on y ajoute ce qu'il faut y ajouter. On renvoie ensuite 201 Created.
+     * En cas d'erreur interne au serveur. On essaye d'envoyer au clienr qu'une erreur interne au projet c'est produite et on envoie 500 Internal serveur error
+     * @param filename
+     */
     protected void putHttp(String filename) {
         System.out.println("PUT " + filename);
         try {
