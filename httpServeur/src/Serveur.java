@@ -370,14 +370,20 @@ public class Serveur
         }
     }
 
+    /**
+     * Suppression d'un fichier sur le Serveur Http, en cas de non existence du fichier une erreur 404 est renvoyé, si
+     * le fichier n'es pas accessible une erreur 403 est renvoyé. Dans le cas d'une suppression réussie un message 204
+     * sera envoyé.
+     * @param filename
+     */
     protected void deleteHttp(String filename) {
         System.out.println("DELETE " + filename);
         try {
             File resource = new File(filename);
             // Suppression du fichier
-            boolean deleted = false;
-            boolean existed = false;
-            if((existed = resource.exists()) && resource.isFile()) {
+            boolean deleted  = false;
+            boolean existed = resource.exists();
+            if(existed && resource.isFile()) {
                 deleted = resource.delete();
             }
 
@@ -389,7 +395,7 @@ public class Serveur
                 // Le fichier n'a pas été trouvé sur le seveur
                 out.write(createHeader("404 Not Found").getBytes());
             } else {
-                // Erreur dans la suppression ou dans l'acces dde la resource
+                // Erreur dans la suppression ou dans l'acces de la resource
                 out.write(createHeader("403 Forbidden").getBytes());
             }
             // on envoie tout
@@ -400,7 +406,7 @@ public class Serveur
             try {
                 out.write(createHeader("500 Internal Server Error").getBytes());
                 out.flush();
-            } catch (Exception e2) {};
+            } catch (Exception ignored) {};
         }
     }
 
