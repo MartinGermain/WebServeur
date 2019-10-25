@@ -2,20 +2,20 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class Serveur
-{
+public class Serveur {
     //Chemins d'acces vers les fichier du serveur.
     // Seul fichier ou le client a acces.
     protected static final String RES_FOLDER = "resources";
     protected static final String FILE_NOT_FOUND = "resources/notfilenotfound.html";
     protected static final String HOME = "resources/index.html";
+    private static final int SERVER_PORT = 5000;
 
     //PARAMETRE EN RAPORT AVEC LA CONNEXION EN COURS
     protected Socket client = null;
     protected BufferedInputStream in = null;
     protected BufferedOutputStream out = null;
 
-    protected void start(int port) {
+    protected void start(final int port) {
         ServerSocket s;
 
         System.out.println("Serveur started on port " + port);
@@ -29,7 +29,7 @@ public class Serveur
         }
 
         System.out.println("Waiting for connection");
-        for(;;) {
+        for (; ; ) {
             try {
                 // Attente de connexion
                 client = s.accept();
@@ -59,10 +59,10 @@ public class Serveur
 
                 int bitCurent = '\0', bitPrecedent = '\0';
                 boolean newline = false;
-                while((bitCurent = in.read()) != -1 && !(newline && bitPrecedent == '\r' && bitCurent == '\n')) {
-                    if(bitPrecedent == '\r' && bitCurent == '\n') {
+                while ((bitCurent = in.read()) != -1 && !(newline && bitPrecedent == '\r' && bitCurent == '\n')) {
+                    if (bitPrecedent == '\r' && bitCurent == '\n') {
                         newline = true;
-                    } else if(!(bitPrecedent == '\n' && bitCurent == '\r')) {
+                    } else if (!(bitPrecedent == '\n' && bitCurent == '\r')) {
                         newline = false;
                     }
                     bitPrecedent = bitCurent;
@@ -72,7 +72,7 @@ public class Serveur
                 System.out.println("REQUEST : " + header);
                 //On va lire la requete seulement si on a encore un bit a lire et si le header n'est pas vide.
 
-                if( bitCurent != -1 && !header.isEmpty()) {
+                if (bitCurent != -1 && !header.isEmpty()) {
                     String[] request = header.split(" ");
                     String requestType = request[0];
                     String requestedElement = request[1].substring(1, request[1].length());
@@ -82,32 +82,32 @@ public class Serveur
                         //Envoie de la page d'accueil.
                         getHttp(HOME);
                         //Ensuite on verifie que l'on possède bien l'element demandé.
-                    }else if (requestedElement.startsWith(RES_FOLDER)) {
+                    } else if (requestedElement.startsWith(RES_FOLDER)) {
                         // ON fait ensuite appele a la bonne méthode pour gérer chauque types de request sur l'element demandé.
-                        if (requestType.equals("GET")){
+                        if (requestType.equals("GET")) {
                             getHttp(requestedElement);
-                        }else if(requestType.equals("POST")) {
+                        } else if (requestType.equals("POST")) {
                             postHttp(requestedElement);
-                        }else if(requestType.equals("HEAD")) {
+                        } else if (requestType.equals("HEAD")) {
                             headHttp(requestedElement);
-                        }else if(requestType.equals("PUT")) {
+                        } else if (requestType.equals("PUT")) {
                             putHttp(requestedElement);
-                        }else if(requestType.equals("DELETE")) {
+                        } else if (requestType.equals("DELETE")) {
                             deleteHttp(requestedElement);
-                        }else {
+                        } else {
                             // Si la requète ne possède pas un type connu on renvoie une erreur.
                             // getBytes transforme la string du header en bytes.
                             out.write(createHeader("501 Not Implemented").getBytes());
                             out.flush(); // Envoie le message et clean.
                         }
 
-                    }else {
+                    } else {
                         // Si le ficher n'est pas dans files alors le client n'y a pas acces..
                         // getBytes transforme la string du header en bytes.
                         out.write(createHeader("403 Forbidden").getBytes());
                         out.flush(); // Envoie le message et clean.
                     }
-                }else {
+                } else {
                     // Sinon la requete n'est pas bien écrite
                     // getBytes transforme la string du header en bytes.
                     out.write(createHeader("400 Bad Request").getBytes());
@@ -127,7 +127,9 @@ public class Serveur
                     //out.write();
                     // Envoyer l'info
                     out.flush();
-                } catch (IOException ex) {};
+                } catch (IOException ex) {
+                }
+                ;
 
                 try {
                     // Meme si il y a des erreurs ils faut fermer la connexion.
@@ -136,22 +138,31 @@ public class Serveur
                     client = null;
                     in = null;
                     out = null;
-                } catch (IOException ex) {};
+                } catch (IOException ex) {
+                }
+                ;
             }
         }
     }
 
-    public static void main(String args[]) {
+    /**
+     * Main Method, demarre un serveur http sur le port 5000.
+     *
+     * @param args Arguments ligne de commande,  ignorer par cette method
+     */
+    public static void main(final String args[]) {
         Serveur s = new Serveur();
-        s.start(5000); // Accéder au port 5000 de localhost pour réaliser les requetes.
+        s.start(SERVER_PORT); // Accéder au port 5000 de localhost pour réaliser les requetes.
     }
 
-    /** Cette méthode permet de renvoyer un header sans corps par exemple juste pour les
+    /**
+     * Cette méthode permet de renvoyer un header sans corps par exemple juste pour les
      * messages d'erreur.
+     *
      * @param headerRsps
      * @return Un string d'un header http.
      */
-    protected String createHeader(String headerRsps) {
+    protected String createHeader(final String headerRsps) {
         // ON écrit un header pour notre reponse.
         String header = "HTTP/1.0 " + headerRsps + "\r\n";
         header += "Server: TPSOCKET\r\n";
@@ -161,35 +172,37 @@ public class Serveur
     }
 
 
-    /** Cette méthode permet de créer une header et de lui ajouter un ficher en corps.
+    /**
+     * Cette méthode permet de créer une header et de lui ajouter un ficher en corps.
      * On oura aussi péciser le type de fichier ainsi que d'autres parametres dans ce header.
      * On précisera aussi la longeur de ce dernier.
      * Cette méthode est utiliser pour les reqest type get put ect...
+     *
      * @param headerRsps
      * @param filename
      * @param length
      * @return
      */
-    protected String createHeader(String headerRsps, String filename, long length) {
+    protected String createHeader(final String headerRsps, final String filename, final long length) {
         // ON écrit un header pour notre reponse.
         String header = "HTTP/1.0 " + headerRsps + "\r\n";
-        if(filename.endsWith(".html") || filename.endsWith(".htm"))
+        if (filename.endsWith(".html") || filename.endsWith(".htm"))
             header += "Content-Type: text/html\r\n";
-        else if(filename.endsWith(".mp4"))
+        else if (filename.endsWith(".mp4"))
             header += "Content-Type: video/mp4\r\n";
-        else if(filename.endsWith(".png"))
+        else if (filename.endsWith(".png"))
             header += "Content-Type: image/png\r\n";
-        else if(filename.endsWith(".jpeg") || filename.endsWith(".jpeg"))
+        else if (filename.endsWith(".jpeg") || filename.endsWith(".jpeg"))
             header += "Content-Type: image/jpg\r\n";
-        else if(filename.endsWith(".mp3"))
+        else if (filename.endsWith(".mp3"))
             header += "Content-Type: audio/mp3\r\n";
-        else if(filename.endsWith(".avi"))
+        else if (filename.endsWith(".avi"))
             header += "Content-Type: video/x-msvideo\r\n";
-        else if(filename.endsWith(".css"))
+        else if (filename.endsWith(".css"))
             header += "Content-Type: text/css\r\n";
-        else if(filename.endsWith(".pdf"))
+        else if (filename.endsWith(".pdf"))
             header += "Content-Type: application/pdf\r\n";
-        else if(filename.endsWith(".odt"))
+        else if (filename.endsWith(".odt"))
             header += "Content-Type: application/vnd.oasis.opendocument.text\r\n";
         header += "Content-Length: " + length + "\r\n";
         header += "Server: TPSOCKET\r\n";
@@ -199,14 +212,15 @@ public class Serveur
         return header;
     }
 
-    /**Cette Méthode permet de traiter une requete GET envoyé par un client.
+    /**
+     * Cette Méthode permet de traiter une requete GET envoyé par un client.
      * Si le fichier n'existe pas on envoie a l'utiliasteur une erreur 404 Not Found et affiche la page html page not found.
      * Si le fichier existe on le lit et on ecrit dans le body de la reponse le fichier. ET on envoie dans le header 200 OK
      * Si il y a une erreur de lecture du fichier ou autre on renvera une erreur 500 qui indique une erreur interne au serveur.
+     *
      * @param filename
      */
-    protected void getHttp(String filename)
-    {
+    protected void getHttp(final String filename) {
         System.out.println("Call to GET " + filename);
         try {
             // On vérifie que le fichier existe.
@@ -223,15 +237,18 @@ public class Serveur
 
             // Ensuite on ouvre le fichier et on l'envoie au client.
             BufferedInputStream fileIn = new BufferedInputStream(new FileInputStream(file));
+
             // Envoi du corps http : le fichier ex html img ...
             // On va lire chaques bits du fichier et les ecrire dans notre sortie.
             byte[] buffer = new byte[256];
             int nbRead;
-            while((nbRead = fileIn.read(buffer)) != -1) {
+            while ((nbRead = fileIn.read(buffer)) != -1) {
                 out.write(buffer, 0, nbRead);
             }
+
             // Fermeture du flux de lecture du file
             fileIn.close();
+
             // ENVOIE PLUS CLEAR
             out.flush();
         } catch (IOException e) {
@@ -240,12 +257,15 @@ public class Serveur
             try {
                 out.write(createHeader("500 Internal Server Error").getBytes());
                 out.flush();
-            } catch (Exception e2) {};
+            } catch (Exception e2) {
+            }
+            ;
         }
     }
 
-    /** La méthode Post permet de mettre a jour une resource.
-     *
+    /**
+     * La méthode Post permet de mettre a jour une resource.
+     * <p>
      * Si le fichier exisiste on se place a la fin de ce dernier et on ajoute le reste. On renvoie au client 200 OK
      * Si le ficher existe pas on le crée et on y ajoute ce qu'il faut y ajouter. On renvoie ensuite 201 Created.
      * En cas d'erreur interne au serveur. On essaye d'envoyer au clienr qu'une erreur interne au projet c'est produite et on envoie 500 Internal serveur error
@@ -253,47 +273,53 @@ public class Serveur
      * @param filename
      * @throws IOException
      */
-    protected void postHttp( String filename) throws IOException {
+    protected void postHttp(final String filename) throws IOException {
         System.out.println("Call to POST " + filename);
-         try {
-             File file = new File(filename);
-             boolean existed = file.exists();
+        try {
+            File file = new File(filename);
+            boolean existed = file.exists();
 
-             // Ouverture du fichier en mode écriture a la fin.
-             BufferedOutputStream fileOut = new BufferedOutputStream(new FileOutputStream(file,existed));
+            // Ouverture du fichier en mode écriture a la fin.
+            BufferedOutputStream fileOut = new BufferedOutputStream(new FileOutputStream(file, existed));
 
-             byte[] buffer = new byte[256];
+            byte[] buffer = new byte[256];
 
-             //Ecrire le body dans le fichier.
-             while(in.available() > 0) {
-                 int nbRead = in.read(buffer);
-                 fileOut.write(buffer, 0, nbRead);
-             }
-             fileOut.flush();
-             // Fermetude du fichier
-             fileOut.close();
+            //Ecrire le body dans le fichier.
+            while (in.available() > 0) {
+                int nbRead = in.read(buffer);
+                fileOut.write(buffer, 0, nbRead);
+            }
+            fileOut.flush();
 
-             // Envoyer le header en fonction de ce qui c'est passé
-             if(existed) {
-                 // Réusite
-                 out.write(createHeader("200 OK").getBytes());
-             } else {
-                 // Création de la resource
-                 out.write(createHeader("201 Created").getBytes());
-             }
+            // Fermetude du fichier
+            fileOut.close();
 
-             //Envoyer le header
-             out.flush();
+            // Envoyer le header en fonction de ce qui c'est passé
+            if (existed) {
 
-         } catch (FileNotFoundException e) {
-             e.printStackTrace();
+                // Réusite
+                out.write(createHeader("200 OK").getBytes());
+            } else {
+
+                // Création de la resource
+                out.write(createHeader("201 Created").getBytes());
+            }
+
+            //Envoyer le header
+            out.flush();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+
             // Si il yb a une erreur on envoie au client l'erreur.
-             out.write(createHeader("500 Internal Server Error").getBytes());
-             out.flush();
-         } catch (IOException e) {}
+            out.write(createHeader("500 Internal Server Error").getBytes());
+            out.flush();
+        } catch (IOException e) {
+        }
     }
 
-    /** La méthode Head permet de récupérer seulement le header d'une requete. Elle est utilise pour avoir les informations importantes du fichier mais sans le contenu du body.
+    /**
+     * La méthode Head permet de récupérer seulement le header d'une requete. Elle est utilise pour avoir les informations importantes du fichier mais sans le contenu du body.
      * Par exemple pour recevoir la taille du fichier ou type de fichier.
      * Si tout ce passe bien on rénvoie un header avec les infos et un code 200 OK.
      * Si le fichier n'existe pas on renvoie 404 page not found.
@@ -301,15 +327,18 @@ public class Serveur
      *
      * @param filename
      */
-    protected void headHttp(String filename) {
+    protected void headHttp(final String filename) {
         System.out.println("HEAD " + filename);
         try {
+
             // On regarde si le fichier existe
             File resource = new File(filename);
-            if(resource.exists() && resource.isFile()) {
+            if (resource.exists() && resource.isFile()) {
+
                 // Si il existe on envoie le header correspondant. sans le corps car c'est un head
                 out.write(createHeader("200 OK", filename, resource.length()).getBytes());
             } else {
+
                 // Envoi du Header signalant une erreur sans le corps car c'est un head
                 out.write(createHeader("404 Not Found").getBytes());
             }
@@ -318,17 +347,22 @@ public class Serveur
         } catch (IOException e) {
             e.printStackTrace();
             try {
+
                 // En cas d'erreur on essaie d'avertir le client
                 out.write(createHeader("500 Internal Server Error").getBytes());
                 out.flush();
-            } catch (Exception e2) {};
+            } catch (Exception e2) {
+            }
+            ;
         }
     }
 
-    /**  La méthode put permet de mettre en ligne une nouvelle resource.
+    /**
+     * La méthode put permet de mettre en ligne une nouvelle resource.
      * Si le fichier exisiste on supprime son contenu et on y ajoute le nouveau contenu. On renvoie au client 204 Modifed
      * Si le ficher existe pas on le crée et on y ajoute ce qu'il faut y ajouter. On renvoie ensuite 201 Created.
      * En cas d'erreur interne au serveur. On essaye d'envoyer au clienr qu'une erreur interne au projet c'est produite et on envoie 500 Internal serveur error
+     *
      * @param filename
      */
     protected void putHttp(String filename) {
@@ -346,7 +380,7 @@ public class Serveur
 
             // Ecrire dans le fichier
             byte[] buffer = new byte[256];
-            while(in.available() > 0) {
+            while (in.available() > 0) {
                 int nbRead = in.read(buffer);
                 fileOut.write(buffer, 0, nbRead);
             }
@@ -357,22 +391,26 @@ public class Serveur
             fileOut.close();
 
             // Envoi du Header (pas besoin de corps)
-            if(existed) {
+            if (existed) {
                 // Si il existe on a bien réecrit dessus donc modifier le contenu
                 out.write(createHeader("204 Modified").getBytes());
             } else {
                 // On indique que l'on a créer le fichier
                 out.write(createHeader("201 Created").getBytes());
             }
+
             // Envoi au client
             out.flush();
         } catch (Exception e) {
             e.printStackTrace();
+
             // En cas d'erreur on essaie d'avertir le client
             try {
                 out.write(createHeader("500 Internal Server Error").getBytes());
                 out.flush();
-            } catch (Exception e2) {};
+            } catch (Exception e2) {
+            }
+            ;
         }
     }
 
@@ -380,44 +418,50 @@ public class Serveur
      * Suppression d'un fichier sur le Serveur Http, en cas de non existence du fichier une erreur 404 est renvoyé, si
      * le fichier n'es pas accessible une erreur 403 est renvoyé. Dans le cas d'une suppression réussie un message 204
      * sera envoyé.
+     *
      * @param filename
      */
-    protected void deleteHttp(String filename) {
+    protected void deleteHttp(final String filename) {
         System.out.println("DELETE " + filename);
         try {
             File resource = new File(filename);
+
             // Suppression du fichier
-            boolean deleted  = false;
+            boolean deleted = false;
             boolean existed = resource.exists();
-            if(existed && resource.isFile()) {
+            if (existed && resource.isFile()) {
                 deleted = resource.delete();
             }
 
             // Envoi du Header
-            if(deleted) {
+            if (deleted) {
+
                 // Le ficher a été suprrimé corectement mais on a rien a renvoyer
                 out.write(createHeader("204 File Deleted").getBytes());
             } else if (!existed) {
+
                 // Le fichier n'a pas été trouvé sur le seveur
                 out.write(createHeader("404 Not Found").getBytes());
             } else {
+
                 // Erreur dans la suppression ou dans l'acces de la resource
                 out.write(createHeader("403 Forbidden").getBytes());
             }
+
             // on envoie tout
             out.flush();
         } catch (Exception e) {
             e.printStackTrace();
+
             // En cas d'erreur on essaie d'avertir le client
             try {
                 out.write(createHeader("500 Internal Server Error").getBytes());
                 out.flush();
-            } catch (Exception ignored) {};
+            } catch (Exception ignored) {
+            }
+            ;
         }
     }
-
-
-
 
 
 }
